@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz: Relationale Datenbanken</title>
+<meta name="description" content="Quiz zu Relationalen Datenbanken (SELECT, FROM, WHERE, ORDER BY, LIKE) – eine Frage pro Seite, kompakte Navigation und Review." />
+<style>
+  :root{
+    --bg: #0b0f1a;
+    --surface: #0f1629;
+    --card: rgba(255,255,255,0.08);
+    --glass: rgba(255,255,255,0.06);
+    --txt: #e6e9f0;
+    --muted: #c2c8d6;
+    --primary: #7c5cff;
+    --accent: #00f3ff;
+    --good: #22c55e;
+    --bad: #ef4444;
+    --warn: #f59e0b;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    --radius: 18px;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 10% -20%, #18233b 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 0%, #121c2e 0%, transparent 50%),
+      linear-gradient(180deg, #0a0e18 0%, var(--bg) 100%);
+    color:var(--txt); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  header{
+    position:sticky; top:0; z-index:5;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(90deg, rgba(124,92,255,0.25), rgba(0,243,255,0.2));
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .wrap{ max-width: 1220px; margin: 0 auto; padding: 12px 20px; display:flex; align-items:center; gap:12px }
+  .brand{ display:flex; align-items:center; gap:14px; flex:1 }
+  .logo{
+    width:40px; height:40px; border-radius:14px;
+    background: conic-gradient(from 180deg, var(--primary), var(--accent), var(--primary));
+    box-shadow: 0 6px 20px rgba(124,92,255,0.35), inset 0 0 22px rgba(0,243,255,0.35);
+  }
+  h1{ font-size: clamp(20px, 2.4vw, 28px); margin:0; letter-spacing:0.2px }
+  .sub{ color:var(--muted); font-size: 0.95rem }
+  .progress{ width:100%; height:8px; background:rgba(255,255,255,0.08); border-radius:999px; overflow:hidden; margin-top:6px }
+  .bar{ height:100%; width:0%; background:linear-gradient(90deg, var(--primary), var(--accent)); box-shadow: 0 0 16px rgba(124,92,255,0.5) inset; transition: width .35s ease }
+
+  main{ flex:1; }
+  /* Sidebar slightly wider so badges fit */
+  .layout{ max-width: 1220px; margin: 18px auto; padding: 0 20px; display:grid; grid-template-columns: 1fr 380px; gap:18px }
+  @media (max-width: 1100px){
+    .layout{ grid-template-columns: 1fr; }
+    .content{ order: 1; }
+    .side{ order: 2; }
+  }
+  .card{
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: var(--shadow); border-radius: var(--radius);
+    padding: clamp(16px, 2.2vw, 24px);
+    backdrop-filter: blur(8px);
+  }
+  .slide{ display:none; animation: fade .3s ease both }
+  .slide.active{ display:block }
+  @keyframes fade{ from{ opacity:0; transform: translateY(6px) } to{ opacity:1; transform:none } }
+
+  .qhead{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:8px }
+  .qtitle{ font-size: clamp(18px, 2.3vw, 24px); font-weight:800; line-height:1.15 }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:var(--glass); border:1px solid rgba(255,255,255,0.1); white-space:nowrap; word-break:keep-all; flex-shrink:0; line-height:1 }
+  .options{ margin-top:10px; display:grid; gap:8px }
+  .opt{
+    padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12);
+    background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    transition: transform .12s ease, border-color .15s ease, background .2s ease;
+    cursor:pointer; font-size: 0.98rem;
+  }
+  .opt:hover{ transform: translateY(-1px); border-color:rgba(0,243,255,0.4) }
+  .opt input{ margin-right:8px }
+  .sqlarea{
+    width:100%; min-height:110px; resize:vertical;
+    padding:10px 12px; border-radius:12px; background:#0d1424; color:var(--txt);
+    border:1px solid rgba(255,255,255,0.12); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  .nav{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px }
+
+  .btn{
+    appearance:none; border:none; border-radius:12px; padding:12px 16px; font-weight:800; letter-spacing:.2px; cursor:pointer;
+    color:#0b0f1a; background:linear-gradient(180deg, #b7a2ff, #7c5cff);
+    box-shadow: 0 10px 20px rgba(124,92,255,.35);
+    transition: transform .12s ease, box-shadow .15s ease;
+  }
+  .btn:hover, .btn:focus-visible{ transform: translateY(-1px); box-shadow: 0 14px 26px rgba(124,92,255,.5); outline: none }
+  .btn.alt{ background:linear-gradient(180deg, #8ff7ff, #00d6e3); color:#00131a }
+  .btn.ghost{ color:var(--txt); background:var(--glass); border:1px solid rgba(255,255,255,.18) }
+  .note{ color:var(--muted); font-size:.95rem }
+  .warn{ color:var(--warn) }
+
+  /* Sidebar styles – two columns, bigger steps & badges, no clipping */
+  .side .title{ font-weight:800; margin-bottom:6px; font-size: 1rem }
+  .side .card{ position: static; max-height: none; overflow: visible; padding: clamp(12px, 1.6vw, 16px); }
+  .step-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100% }
+  .col{ display:grid; gap:12px }
+  .step{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 12px; border-radius:12px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.1); background:var(--glass);
+    transition: transform .12s ease, border-color .15s ease, background .2s ease;
+    min-height: 44px;
+  }
+  .step:hover{ transform: translateY(-1px); border-color:rgba(0,243,255,0.4) }
+  .step .num{ width:24px; height:24px; border-radius:8px; display:grid; place-items:center; font-weight:800; font-size:11px;
+    background:linear-gradient(180deg, #b7a2ff, #7c5cff); color:#0a0e18; flex-shrink:0 }
+  .step .label{ font-size: 0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0 }
+  .step.active{ outline:2px solid rgba(0,243,255,.5) }
+  .step.done{ border-color: rgba(124,92,255,.6) }
+  .step.correct{ border-color: rgba(34,197,94,.8) }
+  .step.wrong{ border-color: rgba(239,68,68,.8) }
+  .badge{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16); white-space:nowrap; flex-shrink:0 }
+
+  /* Schema box (collapsible under SQL questions) */
+  .schema-box{ margin-top:14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background: var(--glass); padding: 10px 12px }
+  .schema{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; margin-top:8px }
+  table{ width:100%; border-collapse: collapse; font-size:0.95rem }
+  th, td{ border:1px solid rgba(255,255,255,0.10); padding:6px 8px; }
+  thead{ background:rgba(255,255,255,0.06) }
+
+  /* Friendly intro extras */
+  .welcome{ display:grid; gap:14px }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px }
+  .chip{ background:var(--glass); border:1px solid rgba(255,255,255,.14); padding:8px 10px; border-radius:999px; font-weight:700; font-size:.92rem }
+  .list{ display:grid; gap:6px; margin:6px 0 0 0 }
+  .list li{ margin-left: 1.2em }
+  .cta{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px }
+
+  /* Review */
+  .review-item{ background:var(--card); border:1px solid rgba(255,255,255,0.10); border-radius:14px; padding:12px; margin:10px 0 }
+  .review-item .tag{ padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(255,255,255,0.15) }
+  .tag.good{ color:var(--good); background:rgba(34,197,94,0.12) }
+  .tag.bad{ color:var(--bad); background:rgba(239,68,68,0.12) }
+
+  /* Confetti */
+  .confetti{ position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+  .piece{ position:absolute; width:8px; height:12px; opacity:.85 }
+
+  /* On very small screens, stack steps in one column */
+  @media (max-width: 520px){
+    .step-grid{ grid-template-columns: 1fr; }
+  }
+.pill small{ white-space:nowrap; line-height:1 }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Quiz: Relationale Datenbanken</h1>
+        <div class="sub">SELECT • FROM • WHERE • ORDER BY • LIKE • AND/OR/NOT</div>
+        <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="layout">
+    <div class="content" aria-live="polite">
+
+      <!-- Intro slide (friendly) -->
+      <section class="slide active" data-kind="intro">
+        <div class="card">
+          <div class="qhead">
+            <div class="qtitle">Willkommen – dein SQL-Quiz 🎧💻</div>
+            <span class="pill"><small>14 Fragen • ca. 10–12 Min</small></span>
+          </div>
+
+          <div class="welcome">
+            <p>Hier checkst du, wie fit du in <strong>SELECT</strong>, <strong>FROM</strong>, <strong>WHERE</strong> &amp; Co. bist. Jede Frage hat eine eigene Seite – entspannt Schritt für Schritt.</p>
+            <div class="chips">
+              <div class="chip">SQL-Grundlagen</div>
+              <div class="chip">Texte filtern mit LIKE</div>
+              <div class="chip">Sortieren mit ORDER BY</div>
+              <div class="chip">AND • OR • NOT</div>
+            </div>
+            <ul class="list">
+              <li><strong>Wichtig:</strong> Lies die Aufgaben genau. Bei SQL zählt die <em>ganze</em> Anweisung.</li>
+              <li>Unter jeder SQL-Aufgabe kannst du bei Bedarf das <strong>Schema einblenden</strong>.</li>
+              <li>Am Ende siehst du, was richtig war – mit Lösung zum Einblenden.</li>
+            </ul>
+            <div class="cta">
+              <button class="btn alt" id="startBtn">Los geht’s</button>
+              <span class="note">Du kannst jederzeit zurück – vor der Abgabe.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slides will be injected here -->
+      <div id="slides"></div>
+
+      <!-- Submit confirmation -->
+      <section class="slide" id="submitSlide" data-kind="submit">
+        <div class="card">
+          <div class="qhead">
+            <div class="qtitle">Abgabe bestätigen</div>
+          </div>
+          <p id="unansweredNote" class="note" style="margin:6px 0 10px 0"></p>
+          <p>Du bist am Ende angekommen. Möchtest du jetzt <strong>abgeben</strong>? Danach kannst du nichts mehr ändern.</p>
+          <div class="nav">
+            <button class="btn ghost" id="backToLast">Zurück zur letzten Frage</button>
+            <button class="btn alt" id="submitNow">Abgeben & Auswerten</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Result -->
+      <section class="slide" id="resultSlide" data-kind="result">
+        <div class="card">
+          <div class="qhead">
+            <div class="qtitle">Auswertung</div>
+          </div>
+          <p id="completionNote" class="note" style="margin-top:0.2rem"></p>
+          <p style="font-size:1.1rem; margin-top:4px">Du hast <strong><span id="score">0</span></strong> von <strong><span id="max">0</span></strong> Punkten erreicht.</p>
+          <div id="review"></div>
+          <div class="nav">
+            <span class="note">In der rechten Leiste siehst du, was richtig (✓) oder falsch (✗) war.</span>
+          </div>
+        </div>
+        <div class="confetti" id="confetti"></div>
+      </section>
+
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="side" aria-label="Quiz-Navigation">
+      <div class="card">
+        <div class="title">Dein Weg durchs Quiz</div>
+        <div class="step-grid">
+          <div class="col" id="col1"></div>
+          <div class="col" id="col2"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script>
+let locked = false; // after submission, no edits allowed
+
+const QUESTIONS = [
+  { id:"q1", points:1, type:"single",
+    title:"Was beschreibt eine gut strukturierte Tabelle am besten?",
+    options:[
+      {text:"Pro Feld steht genau ein Wert; je Spalte ein einheitlicher Datentyp; klare Spaltennamen.", correct:true},
+      {text:"Mehrere Werte werden in einem Feld mit Kommas gespeichert."},
+      {text:"In einer Spalte mischen wir Zahlen und Text nach Bedarf."}
+    ]
+  },
+  { id:"q2", points:1, type:"multi",
+    title:"Was ist eine schlechte Tabellenstruktur? (Mehrfachauswahl)",
+    options:[
+      {text:"Informationen werden in einem Feld zusammengequetscht (z. B. '3:45 Pop Englisch').", correct:true},
+      {text:"Es gibt wiederholte Gruppen wie titel1, titel2, titel3 …", correct:true},
+      {text:"Pro Spalte wird ein konsistenter Datentyp verwendet."}
+    ]
+  },
+  { id:"q3", points:1, type:"single",
+    title:"Wozu dient WHERE in einer SQL-Abfrage?",
+    options:[
+      {text:"Damit legst du Bedingungen für die ausgewählten Datensätze fest.", correct:true},
+      {text:"Damit wählst du die Tabellen aus."},
+      {text:"Damit bestimmst du die Sortierung."}
+    ]
+  },
+  { id:"q4", points:1, type:"multi",
+    title:"Welche Aussagen zu SELECT, FROM und ORDER BY sind richtig?",
+    options:[
+      {text:"SELECT bestimmt, welche Spalten ausgegeben werden.", correct:true},
+      {text:"FROM gibt die Tabellen an, aus denen Daten kommen.", correct:true},
+      {text:"ORDER BY filtert Zeilen aus dem Ergebnis."}
+    ]
+  },
+
+  { id:"sql1", points:2, type:"sql",
+    title:"Gib Titel und Künstler aller Pop-Songs auf Englisch aus und sortiere nach Erscheinungsjahr absteigend.",
+    hint:"", /* Removed hint here */
+    patterns:[
+      /^select titel, kuenstler from songs where genre = 'pop' and sprache = 'englisch' order by .*erscheinungsjahr desc.*$/i,
+      /^select titel, kuenstler from songs where sprache = 'englisch' and genre = 'pop' order by .*erscheinungsjahr desc.*$/i
+    ],
+    solution:`SELECT titel, kuenstler
+FROM songs
+WHERE genre = 'Pop' AND sprache = 'Englisch'
+ORDER BY erscheinungsjahr DESC;`
+  },
+  { id:"sql3", points:2, type:"sql",
+    title:"Finde alle Songs, deren Künstler „Queen“ enthält.",
+    hint:"LIKE mit Platzhaltern, z. B. '%Queen%'.",
+    patterns:[
+      /^select (titel, kuenstler|kuenstler, titel|titel|kuenstler) from songs where kuenstler like '%queen%'(?: order by .+)?$/i
+    ],
+    solution:`SELECT titel, kuenstler
+FROM songs
+WHERE kuenstler LIKE '%Queen%';`
+  },
+  { id:"sql4", points:2, type:"sql",
+    title:"Gib alle Songs aus, die nicht auf Deutsch sind. Ausgabe: titel, sprache.",
+    patterns:[
+      /^select titel, sprache from songs where (?:not sprache = 'deutsch'|sprache <> 'deutsch'|sprache != 'deutsch')(?: order by .+)?$/i
+    ],
+    solution:`SELECT titel, sprache
+FROM songs
+WHERE NOT sprache = 'Deutsch';`
+  },
+  { id:"sql5", points:2, type:"sql",
+    title:"Zeige Serien aus „filmmusik“ ab Jahr 2018. Ausgabe: titel, komponist, erscheinungsjahr. Sortiere nach Jahr aufsteigend.",
+    patterns:[
+      /^select titel, komponist, erscheinungsjahr from filmmusik where kategorie = 'serie' and erscheinungsjahr >= 2018 order by .*erscheinungsjahr(?: asc)?$/i
+    ],
+    solution:`SELECT titel, komponist, erscheinungsjahr
+FROM filmmusik
+WHERE kategorie = 'Serie' AND erscheinungsjahr >= 2018
+ORDER BY erscheinungsjahr ASC;`
+  },
+  { id:"sql6", points:2, type:"sql",
+    title:"Gib Einträge aus „filmmusik“ mit Komponist Hans Zimmer aus (titel, kategorie, erscheinungsjahr).",
+    patterns:[
+      /^select titel, kategorie, erscheinungsjahr from filmmusik where komponist = 'hans zimmer'(?: order by .+)?$/i
+    ],
+    solution:`SELECT titel, kategorie, erscheinungsjahr
+FROM filmmusik
+WHERE komponist = 'Hans Zimmer';`
+  },
+  { id:"sql7", points:2, type:"sql",
+    title:"Gib englische Songs von 2020–2024 aus, die nicht Rap sind. Ausgabe: titel, kuenstler, erscheinungsjahr.",
+    patterns:[
+      /^select titel, kuenstler, erscheinungsjahr from songs where sprache = 'englisch' and erscheinungsjahr between 2020 and 2024 and not genre = 'rap'(?: order by .+)?$/i,
+      /^select titel, kuenstler, erscheinungsjahr from songs where sprache = 'englisch' and erscheinungsjahr >= 2020 and erscheinungsjahr <= 2024 and (?:not )?genre (?:<>|!=) 'rap'(?: order by .+)?$/i
+    ],
+    solution:`SELECT titel, kuenstler, erscheinungsjahr
+FROM songs
+WHERE sprache = 'Englisch'
+  AND erscheinungsjahr BETWEEN 2020 AND 2024
+  AND NOT genre = 'Rap';`
+  },
+
+  { id:"q13", points:1, type:"single",
+    title:"ORDER BY legt die Sortierreihenfolge fest.",
+    options:[ {text:"Wahr", correct:true}, {text:"Falsch"} ]
+  },
+  { id:"q14", points:1, type:"single",
+    title:"In WHERE können Bedingungen mit AND und OR verknüpft werden.",
+    options:[ {text:"Wahr", correct:true}, {text:"Falsch"} ]
+  },
+  { id:"q15", points:1, type:"single",
+    title:"LIKE funktioniert nur mit Zahlenwerten.",
+    options:[ {text:"Wahr"}, {text:"Falsch", correct:true} ]
+  },
+  { id:"q16", points:1, type:"single",
+    title:"Eine Spalte sollte nicht unterschiedliche Datentypen mischen.",
+    options:[ {text:"Wahr", correct:true}, {text:"Falsch"} ]
+  }
+];
+
+const SCHEMA_HTML = `
+<details class="schema-box">
+  <summary style="cursor:pointer; user-select:none"><strong>Schema einblenden</strong> (Songs & Filmmusik)</summary>
+  <div class="schema">
+    <div>
+      <h4>Songs</h4>
+      <table>
+        <thead><tr><th>Attribut</th><th>Typ</th><th>Beschreibung</th></tr></thead>
+        <tbody>
+          <tr><td>id</td><td>INTEGER</td><td>ID (Zahl)</td></tr>
+          <tr><td>titel</td><td>TEXT</td><td>Titel</td></tr>
+          <tr><td>kuenstler</td><td>TEXT</td><td>Künstler</td></tr>
+          <tr><td>erscheinungsjahr</td><td>INTEGER</td><td>Jahr</td></tr>
+          <tr><td>genre</td><td>TEXT</td><td>z. B. Pop, Rock</td></tr>
+          <tr><td>dauer</td><td>TEXT</td><td>mm:ss</td></tr>
+          <tr><td>sprache</td><td>TEXT</td><td>Deutsch, Englisch, …</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h4>Filmmusik</h4>
+      <table>
+        <thead><tr><th>Attribut</th><th>Typ</th><th>Beschreibung</th></tr></thead>
+        <tbody>
+          <tr><td>id</td><td>INTEGER</td><td>ID (Zahl)</td></tr>
+          <tr><td>titel</td><td>TEXT</td><td>Film/Serie</td></tr>
+          <tr><td>kategorie</td><td>TEXT</td><td>Film | Serie</td></tr>
+          <tr><td>komponist</td><td>TEXT</td><td>ein Name</td></tr>
+          <tr><td>erscheinungsjahr</td><td>INTEGER</td><td>Jahr</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</details>
+`;
+
+const slidesHost = document.getElementById("slides");
+let current = 0;
+let answers = [];
+const totalPoints = QUESTIONS.reduce((a,q)=>a+q.points,0);
+
+function unansweredCount(){
+  const ids = new Set(answers.map(a=>a.id));
+  return QUESTIONS.length - ids.size;
+}
+function updateUnansweredNote(){
+  const el = document.getElementById('unansweredNote');
+  if(!el) return;
+  const n = unansweredCount();
+  if(n > 0){
+    el.textContent = `Du hast ${n} Frage${n===1?'':'n'} noch nicht beantwortet.`;
+  } else {
+    el.textContent = 'Du hast alle Fragen beantwortet.';
+  }
+}
+
+
+function makeOption(name, idx, o, type){
+  return `<label class="opt">
+    <input type="${type==='multi' ? 'checkbox':'radio'}" name="${name}" value="${o.text.replace(/"/g,"&quot;")}" ${type==='single'?'required':''}>
+    ${o.text}
+  </label>`;
+}
+function makeSlide(q, i){
+  if(q.type === "sql"){
+    return `<section class="slide" data-kind="q" data-id="${q.id}" data-points="${q.points}" data-type="sql">
+      <div class="card">
+        <div class="qhead">
+          <div class="qtitle">${i+1}) ${q.title}</div>
+          <span class="pill"><small>${q.points} Punkt${q.points>1?'e':''}</small></span>
+        </div>
+        ${q.hint ? `<p class="note">${q.hint}</p>`: ""}
+        <textarea class="sqlarea" placeholder="SELECT …" aria-label="SQL-Antwortfeld"></textarea>
+        <div class="nav">
+          <button class="btn ghost" onclick="goBack()">Zurück</button>
+          <span class="note" id="msg_${q.id}"></span>
+          <button class="btn alt" onclick="confirmAnswer('${q.id}')">Bestätigen & Weiter (Ctrl+Enter)</button>
+        </div>
+        ${SCHEMA_HTML}
+        <template class="solution">${q.solution||""}</template>
+      </div>
+    </section>`;
+  } else {
+    const optsHtml = q.options.map((o,ix)=> makeOption(q.id, ix, o, q.type)).join("");
+    return `<section class="slide" data-kind="q" data-id="${q.id}" data-points="${q.points}" data-type="${q.type}">
+      <div class="card">
+        <div class="qhead">
+          <div class="qtitle">${i+1}) ${q.title}</div>
+          <span class="pill"><small>${q.points} Punkt${q.points>1?'e':''}</small></span>
+        </div>
+        <div class="options">${optsHtml}</div>
+        <div class="nav">
+          <button class="btn ghost" onclick="goBack()">Zurück</button>
+          <span class="note" id="msg_${q.id}"></span>
+          <button class="btn alt" onclick="confirmAnswer('${q.id}')">Bestätigen & Weiter</button>
+        </div>
+        <template class="solution">${q.solution||""}</template>
+      </div>
+    </section>`;
+  }
+}
+slidesHost.innerHTML = QUESTIONS.map(makeSlide).join("");
+
+const slides = Array.from(document.querySelectorAll(".slide"));
+const resultSlide = document.getElementById("resultSlide");
+const submitSlide = document.getElementById("submitSlide");
+const bar = document.getElementById("bar");
+document.getElementById("startBtn").addEventListener("click", ()=> { goto(1) });
+document.getElementById("backToLast").addEventListener("click", ()=> { goto(slides.length-3); });
+document.getElementById("submitNow").addEventListener("click", ()=> { finalize(); });
+window.addEventListener('load', updateUnansweredNote);
+window.addEventListener('resize', updateUnansweredNote);
+
+// Sidebar steps
+const col1 = document.getElementById("col1");
+const col2 = document.getElementById("col2");
+function buildSteps(){
+  col1.innerHTML = ""; col2.innerHTML = "";
+  const total = QUESTIONS.length;
+  const firstColCount = Math.ceil(total/2);
+
+  const intro = document.createElement("div");
+  intro.className = "step";
+  intro.dataset.index = 0;
+  intro.innerHTML = `<div style="display:flex; align-items:center; gap:6px">
+    <div class="num">↺</div><div class="label">Intro</div></div><div class="badge">Start</div>`;
+  intro.addEventListener("click", ()=> !locked && goto(0));
+  col1.appendChild(intro);
+
+  for(let i=0;i<firstColCount;i++){
+    const el = document.createElement("div");
+    el.className = "step";
+    el.dataset.index = (i+1);
+    el.innerHTML = `<div style="display:flex; align-items:center; gap:6px">
+      <div class="num">${i+1}</div><div class="label">Frage ${i+1}</div></div>
+      <div class="badge">offen</div>`;
+    el.addEventListener("click", ()=> { if(!locked) goto(i+1); });
+    col1.appendChild(el);
+  }
+  for(let i=firstColCount;i<total;i++){
+    const el = document.createElement("div");
+    el.className = "step";
+    el.dataset.index = (i+1);
+    el.innerHTML = `<div style="display:flex; align-items:center; gap:6px">
+      <div class="num">${i+1}</div><div class="label">Frage ${i+1}</div></div>
+      <div class="badge">offen</div>`;
+    el.addEventListener("click", ()=> { if(!locked) goto(i+1); });
+    col2.appendChild(el);
+  }
+  const res = document.createElement("div");
+  res.className = "step";
+  res.dataset.index = slides.length-1;
+  res.innerHTML = `<div style="display:flex; align-items:center; gap:6px">
+    <div class="num">✓</div><div class="label">Ergebnis</div></div><div class="badge">—</div>`;
+  res.addEventListener("click", ()=> {
+    if(locked) goto(slides.length-1);
+    else goto(slides.length-2);
+  });
+  col2.appendChild(res);
+}
+buildSteps();
+
+function fitSteps(){
+  const grid = document.querySelector('.step-grid');
+  if(!grid) return;
+  grid.classList.remove('onecol');
+  // If any step overflows, switch to one column
+  const steps = Array.from(grid.querySelectorAll('.step'));
+  const overflow = steps.some(s => s.scrollWidth > s.clientWidth);
+  if(overflow) grid.classList.add('onecol');
+}
+window.addEventListener('load', fitSteps);
+window.addEventListener('resize', fitSteps);
+
+
+function markStep(idx, state, correct=null){
+  const container = document.querySelector(".step-grid");
+  const el = container.querySelector(`.step[data-index="${idx}"]`);
+  if(!el) return;
+  container.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+  el.classList.add("active");
+  const badge = el.querySelector(".badge");
+  if(state === "done"){
+    el.classList.add("done");
+    badge.textContent = "beantw.";
+    badge.className = "badge ans";
+    if(correct === true){
+      el.classList.add("correct"); badge.textContent = "richtig"; badge.className = "badge ok";
+    } else if(correct === false){
+      el.classList.add("wrong"); badge.textContent = "falsch"; badge.className = "badge bad";
+    }
+  }
+}
+
+// Navigation
+function goto(n){
+  if(locked && document.querySelectorAll(".slide")[n]?.dataset.kind === "q"){
+    n = document.querySelectorAll(".slide").length - 1;
+  }
+  document.querySelectorAll(".slide").forEach(s => s.classList.remove("active"));
+  if(n >= document.querySelectorAll(".slide").length){ showResult(); return; }
+  document.querySelectorAll(".slide")[n].classList.add("active");
+  current = n;
+  updateBar();
+  const kind = document.querySelectorAll(".slide")[n].dataset.kind;
+  if(kind === "result"){ showResult(); return; }
+  if(kind === "submit"){ updateUnansweredNote(); }
+  markStep(Math.min(n, QUESTIONS.length), "active");
+  const el = document.querySelectorAll(".slide")[n].querySelector(".qtitle"); if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  fitSteps();
+}
+function goBack(){ if(!locked && current > 0){ goto(current-1); } }
+function updateBar(){
+  const answered = answers.length;
+  const total = QUESTIONS.length;
+  const perc = Math.round((answered/total)*100);
+  bar.style.width = perc+"%";
+}
+
+// Validation
+function normSql(sql){
+  return (sql||"").trim()
+    .replace(/;+\s*$/,"")
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+function checkSql(id, val){
+  const q = QUESTIONS.find(q=>q.id===id);
+  const s = normSql(val);
+  return q.patterns.some(re => re.test(s));
+}
+
+function confirmAnswer(qid){
+  if(locked) return;
+  const slide = Array.from(document.querySelectorAll(".slide")).find(s => s.dataset.id === qid);
+  const type = slide.dataset.type;
+  const pts = Number(slide.dataset.points||0);
+  let correct=false, user="";
+  if(type==="sql"){
+    const ta = slide.querySelector("textarea");
+    user = ta.value;
+    if(!user.trim()){
+      slide.querySelector("#msg_"+qid).innerHTML = "<span class='warn'>Bitte gib eine SQL-Anweisung ein.</span>";
+      return;
+    }
+    correct = checkSql(qid, user);
+  }else if(type==="single"){
+    const sel = slide.querySelector("input[type=radio]:checked");
+    if(!sel){
+      slide.querySelector("#msg_"+qid).innerHTML = "<span class='warn'>Bitte eine Option wählen.</span>";
+      return;
+    }
+    user = sel.value;
+    const q = QUESTIONS.find(q=>q.id===qid);
+    correct = q.options.find(o=>o.text===user)?.correct === true;
+  }else if(type==="multi"){
+    const cbs = Array.from(slide.querySelectorAll("input[type=checkbox]"));
+    const chosen = cbs.filter(cb=>cb.checked).map(cb=>cb.value);
+    if(!chosen.length){
+      slide.querySelector("#msg_"+qid).innerHTML = "<span class='warn'>Bitte mindestens eine Option wählen.</span>";
+      return;
+    }
+    user = chosen.join(" | ");
+    const q = QUESTIONS.find(q=>q.id===qid);
+    const gold = q.options.filter(o=>o.correct).map(o=>o.text);
+    correct = (chosen.length===gold.length) && chosen.every(x=>gold.includes(x));
+  }
+  const idx = answers.findIndex(a=>a.id===qid);
+  const record = {id:qid, correct, user, points: correct?pts:0, ts:Date.now()};
+  if(idx>=0) answers[idx]=record; else answers.push(record);
+
+  const stepIdx = QUESTIONS.findIndex(q=>q.id===qid) + 1;
+  markStep(stepIdx, "done");
+  fitSteps();
+
+  const lastQuestionIndex = 1 + QUESTIONS.length - 1;
+  const slideIndex = Array.from(document.querySelectorAll(".slide")).indexOf(slide);
+  if(slideIndex === lastQuestionIndex){ updateUnansweredNote(); goto(slideIndex + 1); } else { goto(current+1); }
+}
+
+// Finalize
+function finalize(){
+  locked = true;
+  document.querySelectorAll("input, textarea, button").forEach(el => {
+    if(el.closest("#resultSlide")) return;
+    el.disabled = true;
+  });
+  document.querySelectorAll(".step").forEach(step => { step.style.pointerEvents = "none"; });
+  const resStep = document.querySelector(`.step[data-index="${document.querySelectorAll(".slide").length - 1}"]`);
+  if(resStep){ resStep.style.pointerEvents = "auto"; }
+
+  showResult();
+  fitSteps();
+  goto(document.querySelectorAll(".slide").length - 1);
+}
+
+// Review & Result
+function showResult(){
+  const unique = new Set(answers.map(a=>a.id));
+  const total = QUESTIONS.length;
+  const answeredCount = unique.size;
+  const unanswered = total - answeredCount;
+
+  const note = document.getElementById("completionNote");
+  if(unanswered > 0){
+    note.textContent = `Du hast ${unanswered} Frage${unanswered===1?'':'n'} noch nicht beantwortet.`;
+  } else {
+    note.textContent = "Du hast alle Fragen beantwortet.";
+  }
+
+  const sum = answers.reduce((a,b)=>a+b.points,0);
+  document.getElementById("score").textContent = sum;
+  document.getElementById("max").textContent = QUESTIONS.reduce((a,q)=>a+q.points,0);
+
+  QUESTIONS.forEach((q, i)=>{
+    const a = answers.find(z=>z.id===q.id);
+    const idx = i+1;
+    markStep(idx, "done", a ? a.correct : false);
+  });
+  markStep(document.querySelectorAll(".slide").length-1, "done", null);
+
+  const host = document.getElementById("review"); host.innerHTML = "";
+  QUESTIONS.forEach((q, i)=>{
+    const a = answers.find(z=>z.id===q.id) || {user:"–", correct:false, points:0};
+    const item = document.createElement("div");
+    item.className = "review-item";
+    const status = a.correct ? `<span class="tag good">Richtig</span>` : `<span class="tag bad">Falsch</span>`;
+    const userPretty = q.type==="sql" ? `<pre style="white-space:pre-wrap;margin:8px 0;background:#0d1424;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12)">${(a.user||"–").replace(/</g,"&lt;")}</pre>` : `<div class="note"><strong>Deine Antwort:</strong> ${a.user||"–"}</div>`;
+    const sol = q.solution ? q.solution : (q.options ? q.options.filter(o=>o.correct).map(o=>o.text).join(" | ") : "");
+    item.innerHTML = `
+      <div class="qhead" style="margin:0 0 6px 0">
+        <div class="qtitle" style="font-size:20px">${i+1}) ${q.title}</div>
+        ${status}
+      </div>
+      ${userPretty}
+      ${a.correct ? "" : `
+        <button class="btn alt" style="margin-top:6px" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display==='block'?'none':'block')">Lösung einblenden</button>
+        <div style="display:none;margin-top:8px">
+          ${q.type==='sql' ? `<pre style="white-space:pre-wrap;background:#0d1424;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12)">${sol.replace(/</g,"&lt;")}</pre>` : `<div class="note"><strong>Richtige Antwort:</strong> ${sol}</div>`}
+        </div>
+      `}
+    `;
+    host.appendChild(item);
+  });
+
+  launchConfetti(sum / QUESTIONS.reduce((a,q)=>a+q.points,0));
+  window.__QUIZ_SCORE__ = sum;
+}
+
+// Confetti
+function launchConfetti(ratio){
+  const area = document.getElementById("confetti");
+  area.innerHTML = "";
+  const n = Math.floor(120 * Math.max(0.3, ratio));
+  for(let i=0;i<n;i++){
+    const p = document.createElement("div");
+    p.className = "piece";
+    p.style.left = (Math.random()*100)+"%";
+    p.style.top = (-10 - Math.random()*20)+"px";
+    p.style.background = `hsl(${Math.random()*360}, 90%, 60%)`;
+    p.style.transform = `rotate(${Math.random()*360}deg)`;
+    area.appendChild(p);
+    const dur = 3 + Math.random()*2;
+    p.animate([
+      { transform: `translateY(0) rotate(0deg)` },
+      { transform: `translateY(${window.innerHeight+60}px) rotate(${180+Math.random()*360}deg)` }
+    ], { duration: dur*1000, easing: "cubic-bezier(.2,.8,.2,1)", iterations: 1, delay: Math.random()*400 });
+    setTimeout(()=>p.remove(), dur*1000+1000);
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter" && e.ctrlKey){
+    const s = document.querySelectorAll(".slide")[current];
+    if(s?.dataset.kind === "q" && s?.dataset.type === "sql"){
+      confirmAnswer(s.dataset.id);
+    }
+    return;
+  }
+  if(e.key === "Enter" && document.activeElement.tagName !== "TEXTAREA"){
+    const s = document.querySelectorAll(".slide")[current];
+    if(s?.dataset.kind === "q"){
+      confirmAnswer(s.dataset.id);
+    }
+  }
+  // Arrow keys disabled on request
+});
+</script>
+</body>
+</html>
